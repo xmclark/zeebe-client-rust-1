@@ -1,0 +1,13 @@
+[package]
+name = "zeebe-client"
+version = "0.1.0"
+authors = ["Sebastian Menski <sebastian.menski@camunda.com>"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+grpcio = "0.4.1"
+futures = "0.1.25"
+protobuf = "2.0.5"
+failure = "0.1.3"
+failure_derive = "0.1.3"
