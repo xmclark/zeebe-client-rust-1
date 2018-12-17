@@ -3,7 +3,6 @@
 
 // https://github.com/Manishearth/rust-clippy/issues/702
 #![allow(unknown_lints)]
-#![allow(clippy)]
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 
@@ -341,7 +340,7 @@ pub trait Gateway {
     fn resolve_incident(&mut self, ctx: ::grpcio::RpcContext, req: super::gateway::ResolveIncidentRequest, sink: ::grpcio::UnarySink<super::gateway::ResolveIncidentResponse>);
 }
 
-pub fn create_gateway<S: Gateway + Send + Clone + 'static>(s: S) -> ::grpcio::Service {
+pub fn create_gateway<S: Gateway + Send + Clone + 'static>(s: &S) -> ::grpcio::Service {
     let mut builder = ::grpcio::ServiceBuilder::new();
     let mut instance = s.clone();
     builder = builder.add_unary_handler(&METHOD_GATEWAY_TOPOLOGY, move |ctx, req, resp| {

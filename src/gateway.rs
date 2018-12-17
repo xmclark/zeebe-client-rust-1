@@ -3,7 +3,6 @@
 
 // https://github.com/Manishearth/rust-clippy/issues/702
 #![allow(unknown_lints)]
-#![allow(clippy)]
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 
@@ -6038,7 +6037,7 @@ impl ActivatedJob {
 
     // Take field
     pub fn take_jobHeaders(&mut self) -> JobHeaders {
-        self.jobHeaders.take().unwrap_or_else(|| JobHeaders::new())
+        self.jobHeaders.take().unwrap_or_else(JobHeaders::new)
     }
 
     pub fn get_jobHeaders(&self) -> &JobHeaders {

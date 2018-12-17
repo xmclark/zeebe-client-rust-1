@@ -1,0 +1,19 @@
+language: rust
+
+rust:
+  - stable
+  - beta
+  - nightly
+
+services:
+  - docker
+
+matrix:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+
+before_install:
+    - docker pull camunda/zeebe:latest
+    - docker run -d --rm --name zeebe -p 26500:26500 camunda/zeebe:latest
+    - docker ps -a

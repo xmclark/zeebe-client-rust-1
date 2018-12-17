@@ -99,7 +99,10 @@ impl ZeebeClient {
 
     fn get_workflow_request(&self, request: &gateway::GetWorkflowRequest) -> Result<(Workflow, String)> {
         self.client.get_workflow(request)
-            .map(|r| (Workflow::from(&r), r.bpmnXml))
+            .map(|r| {
+                let xml = r.bpmnXml.clone();
+                (Workflow::from(r), xml)
+            })
             .map_err(ZeebeClientError::from)
     }
 
@@ -185,7 +188,7 @@ impl ZeebeClient {
         request.set_retries(retries);
         request.set_errorMessage(error_message.to_string());
 
-        self.client.fail_job(&request);
+        self.client.fail_job(&request)?;
 
         Ok(())
     }

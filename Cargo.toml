@@ -3,7 +3,7 @@ name = "zeebe-client"
 version = "0.1.0"
 authors = ["Sebastian Menski <sebastian.menski@camunda.com>"]
 edition = "2018"
-license = "MIT"
+license = "Apache-2.0"
 
 [dependencies]
 grpcio = "0.4.1"

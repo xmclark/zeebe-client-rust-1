@@ -51,3 +51,61 @@ impl From<gateway::ActivatedJob> for Job {
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use crate::gateway::ActivatedJob;
+    use super::{Job, JobHeaders};
+
+    #[test]
+    fn from_activated_job_to_job() {
+        let key = 12;
+        let job_type = "foo";
+        let workflow_instance_key = 123;
+        let bpmn_process_id = "test-process";
+        let workflow_definition_version = 456;
+        let workflow_key = 789;
+        let element_id = "start_event";
+        let element_instance_key = 1234;
+        let custom_headers = r#"{"one": "two"}"#;
+        let worker = "testWorker";
+        let retries = 34;
+        let deadline = 56;
+        let payload = r#"{"hello": "world"}"#;
+
+        let mut response = ActivatedJob::new();
+        response.set_key(key);
+        response.set_field_type(job_type.to_string());
+        let headers = response.mut_jobHeaders();
+        headers.set_workflowInstanceKey(workflow_instance_key);
+        headers.set_bpmnProcessId(bpmn_process_id.to_string());
+        headers.set_workflowDefinitionVersion(workflow_definition_version);
+        headers.set_workflowKey(workflow_key);
+        headers.set_elementId(element_id.to_string());
+        headers.set_elementInstanceKey(element_instance_key);
+        response.set_customHeaders(custom_headers.to_string());
+        response.set_worker(worker.to_string());
+        response.set_retries(retries);
+        response.set_deadline(deadline);
+        response.set_payload(payload.to_string());
+
+        assert_eq!(Job {
+            key,
+            job_type: job_type.to_string(),
+            job_headers: JobHeaders {
+                workflow_instance_key,
+                bpmn_process_id: bpmn_process_id.to_string(),
+                workflow_definition_version,
+                workflow_key,
+                element_id: element_id.to_string(),
+                element_instance_key,
+            },
+            custom_headers: custom_headers.to_string(),
+            worker: worker.to_string(),
+            retries,
+            deadline,
+            payload: payload.to_string(),
+        }, response.into());
+    }
+}
