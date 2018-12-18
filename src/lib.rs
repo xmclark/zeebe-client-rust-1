@@ -1,14 +1,15 @@
 mod client;
+mod error;
 mod gateway;
 mod gateway_grpc;
-mod error;
+mod job;
 mod topology;
 mod workflow;
-mod job;
+
+#[cfg(test)]
+mod gateway_mock;
 
 pub use crate::client::ZeebeClient;
-pub use crate::topology::{Topology, Broker, Partition, PartitionRole};
-pub use crate::workflow::{Workflow};
 pub use crate::job::{Job, JobHeaders};
-
-
+pub use crate::topology::{Broker, Partition, PartitionRole, Topology};
+pub use crate::workflow::{Workflow, WorkflowInstance};

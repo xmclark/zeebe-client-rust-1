@@ -6,10 +6,7 @@ pub type Result<T> = result::Result<T, ZeebeClientError>;
 #[derive(Fail, Debug)]
 pub enum ZeebeClientError {
     #[fail(display = "Invalid value provided form argument {}: {}", name, message)]
-    InvalidArgument {
-        name: String,
-        message: String,
-    },
+    InvalidArgument { name: String, message: String },
     #[fail(display = "{}", _0)]
     Grpc(#[fail(cause)] grpcio::Error),
     #[fail(display = "{}", _0)]

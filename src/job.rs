@@ -52,11 +52,10 @@ impl From<gateway::ActivatedJob> for Job {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use crate::gateway::ActivatedJob;
     use super::{Job, JobHeaders};
+    use crate::gateway::ActivatedJob;
 
     #[test]
     fn from_activated_job_to_job() {
@@ -90,22 +89,25 @@ mod tests {
         response.set_deadline(deadline);
         response.set_payload(payload.to_string());
 
-        assert_eq!(Job {
-            key,
-            job_type: job_type.to_string(),
-            job_headers: JobHeaders {
-                workflow_instance_key,
-                bpmn_process_id: bpmn_process_id.to_string(),
-                workflow_definition_version,
-                workflow_key,
-                element_id: element_id.to_string(),
-                element_instance_key,
+        assert_eq!(
+            Job {
+                key,
+                job_type: job_type.to_string(),
+                job_headers: JobHeaders {
+                    workflow_instance_key,
+                    bpmn_process_id: bpmn_process_id.to_string(),
+                    workflow_definition_version,
+                    workflow_key,
+                    element_id: element_id.to_string(),
+                    element_instance_key,
+                },
+                custom_headers: custom_headers.to_string(),
+                worker: worker.to_string(),
+                retries,
+                deadline,
+                payload: payload.to_string(),
             },
-            custom_headers: custom_headers.to_string(),
-            worker: worker.to_string(),
-            retries,
-            deadline,
-            payload: payload.to_string(),
-        }, response.into());
+            response.into()
+        );
     }
 }
