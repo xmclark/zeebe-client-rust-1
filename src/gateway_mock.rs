@@ -1,12 +1,10 @@
-#![allow(dead_code)]
-
 use crate::gateway;
 use crate::gateway_grpc::{self, Gateway};
 use crate::ZeebeClient;
-use futures::Future;
+use futures::{Future, Sink};
 use grpcio::{
     Environment, RpcContext, RpcStatus, RpcStatusCode, Server, ServerBuilder, ServerStreamingSink,
-    UnarySink,
+    UnarySink, WriteFlags
 };
 use std::sync::{Arc, Mutex};
 
@@ -44,7 +42,7 @@ pub enum GrpcResponse {
     CreateWorkflowInstance(gateway::CreateWorkflowInstanceResponse),
     CancelWorkflowInstance(gateway::CancelWorkflowInstanceResponse),
     UpdateWorkflowInstancePayload(gateway::UpdateWorkflowInstancePayloadResponse),
-    ActivateJobs(gateway::ActivateJobsResponse),
+    ActivateJobs(Vec<gateway::ActivateJobsResponse>),
     ListWorkflows(gateway::ListWorkflowsResponse),
     GetWorkflow(gateway::GetWorkflowResponse),
     ResolveIncident(gateway::ResolveIncidentResponse),
@@ -221,11 +219,42 @@ impl Gateway for MockGateway {
 
     fn activate_jobs(
         &mut self,
-        _ctx: RpcContext,
-        _req: gateway::ActivateJobsRequest,
-        _sink: ServerStreamingSink<gateway::ActivateJobsResponse>,
+        ctx: RpcContext,
+        req: gateway::ActivateJobsRequest,
+        sink: ServerStreamingSink<gateway::ActivateJobsResponse>,
     ) {
-        unimplemented!()
+        self.set_request(GrpcRequest::ActivateJobs(req));
+        match self.take_response() {
+            Some(GrpcResponse::ActivateJobs(ref responses)) => {
+                let responses: Vec<_> = responses.into_iter()
+                    .map(|r| (r.clone(), WriteFlags::default()))
+                    .collect();
+
+                let f = sink
+                    .send_all(futures::stream::iter_ok::<_, grpcio::Error>(responses))
+                    .map(|_| {})
+                    .map_err(|e| panic!("Failed to respond: {}", e));
+                ctx.spawn(f);
+            }
+            Some(_) => {
+                let f = sink
+                    .fail(RpcStatus::new(
+                        RpcStatusCode::Internal,
+                        Some(format!("Different response mocked")),
+                    ))
+                    .map_err(|e| panic!("Failed to respond: {}", e));
+                ctx.spawn(f);
+            }
+            None => {
+                let f = sink
+                    .fail(RpcStatus::new(
+                        RpcStatusCode::Unimplemented,
+                        Some(format!("No response mocked")),
+                    ))
+                    .map_err(|e| panic!("Failed to respond: {}", e));
+                ctx.spawn(f);
+            }
+        }
     }
 
     fn list_workflows(
