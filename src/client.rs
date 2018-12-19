@@ -272,6 +272,16 @@ impl ZeebeClient {
 
         Ok(())
     }
+
+    pub fn update_worklfow_instance_payload(&self, element_instance_key: i64, payload: &str) -> Result<()> {
+        let mut request = gateway::UpdateWorkflowInstancePayloadRequest::new();
+        request.set_elementInstanceKey(element_instance_key);
+        request.set_payload(payload.to_string());
+
+        self.client.update_workflow_instance_payload(&request)?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -879,6 +889,32 @@ mod tests {
         if let GrpcRequest::UpdateJobRetries(request) = gateway.get_request() {
             assert_eq!(job_key, request.get_jobKey());
             assert_eq!(retries, request.get_retries());
+        } else {
+            panic!("Wrong request received");
+        }
+    }
+
+    #[test]
+    fn update_workflow_instance_payload() {
+        // given
+        let (gateway, client, _server) = MockGateway::init();
+
+        let element_instance_key = 1_200;
+        let payload = r#"{"hello": "world"}"#;
+
+        let response = gateway::UpdateWorkflowInstancePayloadResponse::new();
+
+        gateway.set_response(GrpcResponse::UpdateWorkflowInstancePayload(response));
+
+        // when
+        client
+            .update_worklfow_instance_payload(element_instance_key, payload)
+            .unwrap();
+
+        // then
+        if let GrpcRequest::UpdateWorkflowInstancePayload(request) = gateway.get_request() {
+            assert_eq!(element_instance_key, request.get_elementInstanceKey());
+            assert_eq!(payload, request.get_payload());
         } else {
             panic!("Wrong request received");
         }
