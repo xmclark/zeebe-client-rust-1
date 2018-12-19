@@ -273,7 +273,11 @@ impl ZeebeClient {
         Ok(())
     }
 
-    pub fn update_worklfow_instance_payload(&self, element_instance_key: i64, payload: &str) -> Result<()> {
+    pub fn update_worklfow_instance_payload(
+        &self,
+        element_instance_key: i64,
+        payload: &str,
+    ) -> Result<()> {
         let mut request = gateway::UpdateWorkflowInstancePayloadRequest::new();
         request.set_elementInstanceKey(element_instance_key);
         request.set_payload(payload.to_string());
@@ -890,9 +894,7 @@ mod tests {
         gateway.set_response(GrpcResponse::UpdateJobRetries(response));
 
         // when
-        client
-            .update_job_retries(job_key, retries)
-            .unwrap();
+        client.update_job_retries(job_key, retries).unwrap();
 
         // then
         if let GrpcRequest::UpdateJobRetries(request) = gateway.get_request() {
@@ -941,9 +943,7 @@ mod tests {
         gateway.set_response(GrpcResponse::ResolveIncident(response));
 
         // when
-        client
-            .resolve_incident(incident_key)
-            .unwrap();
+        client.resolve_incident(incident_key).unwrap();
 
         // then
         if let GrpcRequest::ResolveIncident(request) = gateway.get_request() {
