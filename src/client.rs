@@ -282,6 +282,15 @@ impl ZeebeClient {
 
         Ok(())
     }
+
+    pub fn resolve_incident(&self, incident_key: i64) -> Result<()> {
+        let mut request = gateway::ResolveIncidentRequest::new();
+        request.set_incidentKey(incident_key);
+
+        self.client.resolve_incident(&request)?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -920,6 +929,29 @@ mod tests {
         }
     }
 
+    #[test]
+    fn resolve_incident() {
+        // given
+        let (gateway, client, _server) = MockGateway::init();
+
+        let incident_key = 1123;
+
+        let response = gateway::ResolveIncidentResponse::new();
+
+        gateway.set_response(GrpcResponse::ResolveIncident(response));
+
+        // when
+        client
+            .resolve_incident(incident_key)
+            .unwrap();
+
+        // then
+        if let GrpcRequest::ResolveIncident(request) = gateway.get_request() {
+            assert_eq!(incident_key, request.get_incidentKey());
+        } else {
+            panic!("Wrong request received");
+        }
+    }
 
     fn create_broker_info(node_id: i32, host: &str, port: i32) -> gateway::BrokerInfo {
         let mut broker = gateway::BrokerInfo::new();
