@@ -4,7 +4,7 @@ use crate::ZeebeClient;
 use futures::{Future, Sink};
 use grpcio::{
     Environment, RpcContext, RpcStatus, RpcStatusCode, Server, ServerBuilder, ServerStreamingSink,
-    UnarySink, WriteFlags
+    UnarySink, WriteFlags,
 };
 use std::sync::{Arc, Mutex};
 
@@ -226,7 +226,8 @@ impl Gateway for MockGateway {
         self.set_request(GrpcRequest::ActivateJobs(req));
         match self.take_response() {
             Some(GrpcResponse::ActivateJobs(ref responses)) => {
-                let responses: Vec<_> = responses.into_iter()
+                let responses: Vec<_> = responses
+                    .into_iter()
                     .map(|r| (r.clone(), WriteFlags::default()))
                     .collect();
 

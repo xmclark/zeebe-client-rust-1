@@ -273,7 +273,7 @@ impl ZeebeClient {
         Ok(())
     }
 
-    pub fn update_worklfow_instance_payload(
+    pub fn update_workflow_instance_payload(
         &self,
         element_instance_key: i64,
         payload: &str,
@@ -919,7 +919,7 @@ mod tests {
 
         // when
         client
-            .update_worklfow_instance_payload(element_instance_key, payload)
+            .update_workflow_instance_payload(element_instance_key, payload)
             .unwrap();
 
         // then
@@ -948,6 +948,188 @@ mod tests {
         // then
         if let GrpcRequest::ResolveIncident(request) = gateway.get_request() {
             assert_eq!(incident_key, request.get_incidentKey());
+        } else {
+            panic!("Wrong request received");
+        }
+    }
+
+    macro_rules! activated_job {
+        ($key:expr, $job_type:expr, $job_headers:expr, $custom_headers:expr, $worker:expr, $retries:expr, $deadline:expr, $payload:expr) => {{
+            let mut job = gateway::ActivatedJob::new();
+            job.set_key($key);
+            job.set_field_type($job_type.to_string());
+            job.set_jobHeaders($job_headers);
+            job.set_customHeaders($custom_headers.to_string());
+            job.set_worker($worker.to_string());
+            job.set_retries($retries);
+            job.set_deadline($deadline);
+            job.set_payload($payload.to_string());
+            job
+        }};
+    }
+
+    macro_rules! job_headers {
+        ($workflow_instance_key:expr, $bpmn_process_id:expr, $workflow_definition_version: expr, $workflow_key:expr, $element_id:expr, $element_instance_key:expr) => {{
+            let mut headers = gateway::JobHeaders::new();
+            headers.set_workflowInstanceKey($workflow_instance_key);
+            headers.set_bpmnProcessId($bpmn_process_id.to_string());
+            headers.set_workflowDefinitionVersion($workflow_definition_version);
+            headers.set_workflowKey($workflow_key);
+            headers.set_elementId($element_id.to_string());
+            headers.set_elementInstanceKey($element_instance_key);
+            headers
+        }};
+    }
+
+    #[test]
+    fn activate_job() {
+        // given
+        let (gateway, client, _server) = MockGateway::init();
+
+        let job_type = "test";
+        let worker = "zeebe-rust";
+        let json = r#"{"hello": "world"}"#;
+        let retries = 3;
+        let timeout = 12_000;
+
+        let workflow_instance_key = 123;
+        let bpmn_process_id = "test-process";
+        let workflow_definition_version = 12;
+        let workflow_key = 1234;
+        let element_id = "start_event";
+        let element_instance_key = 135;
+
+        let amount = 128;
+
+        let mut responses = Vec::new();
+
+        let mut response = gateway::ActivateJobsResponse::new();
+        response.mut_jobs().push(activated_job!(
+            1,
+            job_type,
+            job_headers!(
+                workflow_instance_key,
+                bpmn_process_id,
+                workflow_definition_version,
+                workflow_key,
+                element_id,
+                element_instance_key
+            ),
+            json,
+            worker,
+            retries,
+            timeout,
+            json
+        ));
+        response.mut_jobs().push(activated_job!(
+            2,
+            job_type,
+            job_headers!(
+                workflow_instance_key,
+                bpmn_process_id,
+                workflow_definition_version,
+                workflow_key,
+                element_id,
+                element_instance_key
+            ),
+            json,
+            worker,
+            retries,
+            timeout,
+            json
+        ));
+        responses.push(response);
+
+        let mut response = gateway::ActivateJobsResponse::new();
+        response.mut_jobs().push(activated_job!(
+            3,
+            job_type,
+            job_headers!(
+                workflow_instance_key,
+                bpmn_process_id,
+                workflow_definition_version,
+                workflow_key,
+                element_id,
+                element_instance_key
+            ),
+            json,
+            worker,
+            retries,
+            timeout,
+            json
+        ));
+        responses.push(response);
+
+        gateway.set_response(GrpcResponse::ActivateJobs(responses));
+
+        // when
+        let result = client
+            .activate_jobs(job_type, worker, timeout, amount)
+            .unwrap();
+
+        assert_eq!(
+            vec![
+                Job {
+                    key: 1,
+                    job_type: job_type.to_string(),
+                    job_headers: JobHeaders {
+                        workflow_instance_key,
+                        bpmn_process_id: bpmn_process_id.to_string(),
+                        workflow_definition_version,
+                        workflow_key,
+                        element_id: element_id.to_string(),
+                        element_instance_key,
+                    },
+                    custom_headers: json.to_string(),
+                    worker: worker.to_string(),
+                    retries,
+                    deadline: timeout,
+                    payload: json.to_string(),
+                },
+                Job {
+                    key: 2,
+                    job_type: job_type.to_string(),
+                    job_headers: JobHeaders {
+                        workflow_instance_key,
+                        bpmn_process_id: bpmn_process_id.to_string(),
+                        workflow_definition_version,
+                        workflow_key,
+                        element_id: element_id.to_string(),
+                        element_instance_key,
+                    },
+                    custom_headers: json.to_string(),
+                    worker: worker.to_string(),
+                    retries,
+                    deadline: timeout,
+                    payload: json.to_string(),
+                },
+                Job {
+                    key: 3,
+                    job_type: job_type.to_string(),
+                    job_headers: JobHeaders {
+                        workflow_instance_key,
+                        bpmn_process_id: bpmn_process_id.to_string(),
+                        workflow_definition_version,
+                        workflow_key,
+                        element_id: element_id.to_string(),
+                        element_instance_key,
+                    },
+                    custom_headers: json.to_string(),
+                    worker: worker.to_string(),
+                    retries,
+                    deadline: timeout,
+                    payload: json.to_string(),
+                }
+            ],
+            result
+        );
+
+        // then
+        if let GrpcRequest::ActivateJobs(request) = gateway.get_request() {
+            assert_eq!(job_type, request.get_field_type());
+            assert_eq!(worker, request.get_worker());
+            assert_eq!(timeout, request.get_timeout());
+            assert_eq!(amount, request.get_amount());
         } else {
             panic!("Wrong request received");
         }
