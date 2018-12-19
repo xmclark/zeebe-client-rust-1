@@ -262,6 +262,16 @@ impl ZeebeClient {
 
         Ok(())
     }
+
+    pub fn update_job_retries(&self, job_key: i64, retries: i32) -> Result<()> {
+        let mut request = gateway::UpdateJobRetriesRequest::new();
+        request.set_jobKey(job_key);
+        request.set_retries(retries);
+
+        self.client.update_job_retries(&request)?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -847,6 +857,33 @@ mod tests {
             panic!("Wrong request received");
         }
     }
+
+    #[test]
+    fn update_job_retries() {
+        // given
+        let (gateway, client, _server) = MockGateway::init();
+
+        let job_key = 123;
+        let retries = 43;
+
+        let response = gateway::UpdateJobRetriesResponse::new();
+
+        gateway.set_response(GrpcResponse::UpdateJobRetries(response));
+
+        // when
+        client
+            .update_job_retries(job_key, retries)
+            .unwrap();
+
+        // then
+        if let GrpcRequest::UpdateJobRetries(request) = gateway.get_request() {
+            assert_eq!(job_key, request.get_jobKey());
+            assert_eq!(retries, request.get_retries());
+        } else {
+            panic!("Wrong request received");
+        }
+    }
+
 
     fn create_broker_info(node_id: i32, host: &str, port: i32) -> gateway::BrokerInfo {
         let mut broker = gateway::BrokerInfo::new();
