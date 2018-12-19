@@ -381,7 +381,7 @@ mod tests {
         let bpmn_process_id = "test-process";
         let version = 12;
         let workflow_key = 34;
-        let resource_name = "tests/order-process.bpmn";
+        let resource_name = "etc/order-process.bpmn";
         let definition: &[u8] = &::std::fs::read(resource_name).unwrap();
 
         let mut metadata = gateway::WorkflowMetadata::new();
